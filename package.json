@@ -1,0 +1,25 @@
+{
+  "name": "devops-task",
+  "version": "1.0.0",
+  "main": "src/index.js",
+  "author": "Nace Logar <nace.logar@iryo.io>",
+  "license": "",
+  "private": true,
+  "scripts": {
+    "dev": "nodemon",
+    "start": "node src/index.js",
+    "prettier:base": "prettier './{src}/**/*.{js,html,json}' --config .prettierrc",
+    "format": "yarn prettier:base --write",
+    "lint": "yarn prettier:base --check"
+  },
+  "dependencies": {
+    "chalk": "4.1.1",
+    "express": "4.18.2",
+    "lodash": "4.17.21",
+    "morgan": "1.10.0"
+  },
+  "devDependencies": {
+    "nodemon": "2.0.20",
+    "prettier": "2.7.1"
+  }
+}
