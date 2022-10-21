@@ -4,6 +4,7 @@ const morgan = require('morgan');
 const api = require('./api');
 const config = require('./config');
 const logger = require('./utils/logger');
+const redis = require('./redis');
 const errorMiddleware = require('./middleware/errorMiddleware');
 
 const app = express();
@@ -20,6 +21,7 @@ const server = app.listen(PORT, function (err) {
   if (err) {
     logger.error(err);
     process.exit(1);
+    redis.quit();
   }
   logger.log(`Server is running`);
 });
@@ -28,6 +30,8 @@ const osSignals = ['SIGQUIT', 'SIGINT', 'SIGTERM'];
 osSignals.forEach((signal) => {
   process.on(signal, () => {
     logger.log(`Received ${signal}`);
+    redis.quit();
+
     server.close(() => {
       logger.log('Process terminated');
     });
