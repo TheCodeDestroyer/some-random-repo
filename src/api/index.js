@@ -1,4 +1,5 @@
 const config = require('../config');
+const logger = require('../utils/logger');
 const redis = require('../redis');
 
 const router = require('express').Router();
@@ -8,8 +9,10 @@ router.get('/', async (req, res) => {
     const calledTimes = await redis.incr('called');
 
     res.send(`Hello! This app was called (${calledTimes}) of times!`);
-  } catch {
-    res.send(`There was an error connecting to redis after trying 10 times.`);
+  } catch (e) {
+    logger.error(e);
+
+    res.send(`There was an error connecting to redis.`);
   }
 });
 
