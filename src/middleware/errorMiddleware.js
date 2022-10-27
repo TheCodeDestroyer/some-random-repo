@@ -2,7 +2,7 @@ const logger = require('../utils/logger');
 const ApiError = require('../utils/ApiError');
 
 // Unused param next needs to remain
-const errorMiddleware = function (err, req, res, next) {
+const errorMiddleware = function (err, req, res) {
   if (err && err.stack) {
     logger.error(err.stack);
   }
@@ -11,7 +11,9 @@ const errorMiddleware = function (err, req, res, next) {
 
   if (err instanceof ApiError) {
     const { statusCode, message } = err;
+
     res.status(statusCode).json({ message });
+
     return;
   }
 

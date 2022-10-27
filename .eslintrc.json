@@ -1,0 +1,13 @@
+{
+  "extends": "tcd/configs/node",
+  "root": true,
+  "rules": {
+    // Prettier conflicts
+    "indent": "off",
+    "implicit-arrow-linebreak": "off",
+    "function-paren-newline": "off",
+    "space-before-function-paren": "off",
+    "newline-per-chained-call": "off",
+    "react/jsx-curly-newline": "off"
+  }
+}

@@ -8,9 +8,12 @@
   "scripts": {
     "dev": "nodemon",
     "start": "node src/index.js",
-    "prettier:base": "prettier './{src}/**/*.{js,html,json}' --config .prettierrc",
+    "prettier:base": "prettier './src/**/*.{js,html,json}' --config .prettierrc",
+    "eslint:base": "eslint ./src --cache",
     "format": "yarn prettier:base --write",
-    "lint": "yarn prettier:base --check"
+    "prettier:lint": "yarn prettier:base --check",
+    "eslint:lint": "yarn eslint:base",
+    "lint": "yarn prettier:lint && yarn eslint:lint"
   },
   "dependencies": {
     "chalk": "4.1.1",
@@ -22,6 +25,8 @@
     "prom-client": "14.1.0"
   },
   "devDependencies": {
+    "eslint": "8.4.1",
+    "eslint-config-tcd": "1.1.0",
     "nodemon": "2.0.20",
     "prettier": "2.7.1"
   }

@@ -1,3 +1,4 @@
+/* eslint-disable no-console */
 const chalk = require('chalk');
 const _ = require('lodash');
 
@@ -5,6 +6,7 @@ const log = (...args) => {
   const mappedArgs = _.toArray(args).map((arg) => {
     if (typeof arg === 'object') {
       const string = JSON.stringify(arg, null, 2);
+
       return chalk.green(string);
     } else {
       return chalk.green(arg.toString());
@@ -15,7 +17,8 @@ const log = (...args) => {
 };
 
 const error = (...args) => {
-  const mappedArgs = _.toArray(args).map(function (arg) {
+  const mappedArgs = _.toArray(args).map((arg) => {
+    // eslint-disable-next-line no-param-reassign
     arg = arg.stack || arg;
     const name = arg.name || '[ ❌ ERROR ❌ ]';
 
@@ -23,11 +26,13 @@ const error = (...args) => {
 
     if (typeof arg === 'object') {
       const string = JSON.stringify(arg, null, 2);
+
       msg = chalk.red(string);
     } else {
       msg = chalk.red(arg.toString());
     }
 
+    // eslint-disable-next-line prefer-template
     return chalk.yellow.bold(name) + ' ' + chalk.red(msg);
   });
 

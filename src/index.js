@@ -19,7 +19,7 @@ app.use('/', api);
 // Needs to be the last one
 app.use(errorMiddleware);
 
-const server = app.listen(PORT, function (err) {
+const server = app.listen(PORT, (err) => {
   if (err) {
     logger.error(err);
     process.exit(1);
@@ -29,6 +29,7 @@ const server = app.listen(PORT, function (err) {
 });
 
 const osSignals = ['SIGQUIT', 'SIGINT', 'SIGTERM'];
+
 osSignals.forEach((signal) => {
   process.on(signal, () => {
     logger.log(`Received ${signal}`);
