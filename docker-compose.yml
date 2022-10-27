@@ -1,4 +1,5 @@
 version: "3.9"
+
 services:
   redis:
     image: "bitnami/redis:latest"
@@ -8,14 +9,15 @@ services:
       - REDIS_DISABLE_COMMANDS=FLUSHDB,FLUSHALL,CONFIG
     ports:
       - "${REDIS_PORT}:${REDIS_PORT}"
+
   webserver:
     build: .
     depends_on:
       - redis
     environment:
-      - PORT=5000
       - REDIS_PORT=$REDIS_PORT
       - REDIS_PASSWORD=$REDIS_PASSWORD
       - REDIS_HOST=redis
+      - WEB_SERVER_VERSION=1.0.0
     ports:
       - "${PORT:-3000}:3000"

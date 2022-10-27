@@ -16,8 +16,8 @@ router.get('/', async (req, res) => {
   }
 });
 
-router.get('/ping', (req, res) => {
-  res.send('Pong!');
+router.get('/healthcheck', (req, res) => {
+  res.status(200).send('OK');
 });
 
 router.get('/version', (req, res) => {
