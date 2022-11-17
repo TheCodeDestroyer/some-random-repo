@@ -1,7 +1,6 @@
 const logger = require('../utils/logger');
 const ApiError = require('../utils/ApiError');
 
-// Unused param next needs to remain
 const errorMiddleware = function (err, req, res) {
   if (err && err.stack) {
     logger.error(err.stack);

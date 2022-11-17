@@ -1,0 +1,23 @@
+apiVersion: skaffold/v3
+kind: Config
+metadata:
+  name: some-random-repo
+build:
+  local:
+    push: false
+  artifacts:
+  - image: thecodedestroyer/some-random-image-webserver
+    docker:
+      dockerfile: Dockerfile.dev
+    sync:
+      manual:
+        - src: '**/*.js'
+          dest: .
+manifests:
+  rawYaml:
+  - k8s/redis-volume.yaml
+  - k8s/redis-deployment.yaml
+  - k8s/redis-service.yaml
+  - k8s/server-deployment.yaml
+  - k8s/server-service.yaml
+  - k8s/ingress-service.yaml

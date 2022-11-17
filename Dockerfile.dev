@@ -1,0 +1,17 @@
+FROM node:16-alpine
+
+WORKDIR /app
+
+ENV NODE_ENV=prod
+
+COPY ./package.json ./yarn.lock ./
+
+RUN yarn install --production
+
+COPY --chown=node:node . .
+
+USER node
+
+EXPOSE 3000
+
+CMD ["yarn", "dev"]

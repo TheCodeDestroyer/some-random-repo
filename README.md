@@ -3,28 +3,65 @@
 ## Requirements
 
 ### Software
+
 - [docker]()
 - [docker compose]()
 
 ### ENV Variables
 
-1. REDIS_PASSWORD - Used to set password of redis instance and to provide connection info for webserver 
+1. REDIS_PASSWORD - Used to set password of redis instance and to provide connection info for webserver
 2. REDIS_PORT - Used to set customize redis instance port and to provide connection info for webserver
 3. REDIS_HOST - Used to provide connection info for webserver
 
 Optional ENV variables:
+
 1. WEB_SERVER_VERSION - This value will be returned when calling `/version` endpoint on the webserver
 
-## Start Dev
+## Development
+
+### Docker compose
 
 To start dev environment run:
+
 ```sh
 docker compose up
 ```
 
-The webserver will be available on http://localhost:{3000 or $PORT you defined}
+The webserver will be available on http://localhost:3000
 
-### Webserver
+### K8S
+
+#### Prerequisites
+
+You need to have k8s cluster locally or a minikube installed.
+
+You also need to install k8s ingress nginx.
+
+If you have `minikube`, just run:
+
+```sh
+minikube addons enable ingress
+```
+
+Otherwise instructions to install ingress can be found [here](https://kubernetes.github.io/ingress-nginx/deploy/#contents), just search for your environment.
+
+And finally prepare the required redis password secret, by running:
+
+```shell
+./create-k8s-secret.sh
+```
+
+#### Start dev
+
+To start dev environment run:
+
+```shell
+skaffold dev
+```
+
+When terminating skaffold will clean everything up except `redis-secret` you created manually
+
+## Webserver
 
 Webserver has 4 endpoints:
 

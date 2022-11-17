@@ -5,7 +5,7 @@ const redis = require('../redis');
 const router = require('express').Router();
 
 const handleHealthCheck = (req, res) => {
-  res.sendStatus(200)
+  res.sendStatus(200);
 };
 
 router.get('/', async (req, res) => {
@@ -23,6 +23,10 @@ router.get('/', async (req, res) => {
 router.get('/healthz', handleHealthCheck);
 router.get('/readyz', handleHealthCheck);
 router.get('/livez', handleHealthCheck);
+
+router.get('/favico.ico', (req, res) => {
+  res.sendStatus(404);
+});
 
 router.get('/version', (req, res) => {
   res.status(200).send({
