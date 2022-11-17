@@ -4,6 +4,10 @@ const redis = require('../redis');
 
 const router = require('express').Router();
 
+const handleHealthCheck = (req, res) => {
+  res.sendStatus(200)
+};
+
 router.get('/', async (req, res) => {
   try {
     const calledTimes = await redis.incr('called');
@@ -16,9 +20,9 @@ router.get('/', async (req, res) => {
   }
 });
 
-router.get('/healthcheck', (req, res) => {
-  res.status(200).send('OK');
-});
+router.get('/healthz', handleHealthCheck);
+router.get('/readyz', handleHealthCheck);
+router.get('/livez', handleHealthCheck);
 
 router.get('/version', (req, res) => {
   res.status(200).send({

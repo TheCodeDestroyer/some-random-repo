@@ -20,4 +20,4 @@ services:
       - REDIS_HOST=redis
       - WEB_SERVER_VERSION=1.0.0
     ports:
-      - "${PORT:-3000}:3000"
+      - "3000:3000"

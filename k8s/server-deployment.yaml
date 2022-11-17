@@ -1,0 +1,30 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: server-deployment
+spec:
+  selector:
+    matchLabels:
+      component: server
+  template:
+    metadata:
+      labels:
+        component: server
+    spec:
+      containers:
+        - name: server
+          image: thecodedestroyer/some-random-image-webserver
+          ports:
+            - containerPort: 3000
+          env:
+            - name: WEB_SERVER_VERSION
+              value: "1.0.0"
+            - name: REDIS_PORT
+              value: "6379"
+            - name: REDIS_HOST
+              value: redis-cluster-ip-service
+            - name: REDIS_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: redis-secret
+                  key: password
