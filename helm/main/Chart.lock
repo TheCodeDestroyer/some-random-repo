@@ -1,0 +1,9 @@
+dependencies:
+- name: common
+  repository: file://../common
+  version: 0.1.0
+- name: redis
+  repository: file://../redis
+  version: 0.0.1
+digest: sha256:05dec5f04d259e1b67e7eb46d8a31dabc210d178a78fec149dbd195d85c53aca
+generated: "2022-11-17T17:21:21.326890255+01:00"

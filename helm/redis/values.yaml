@@ -1,0 +1,10 @@
+replicaCount: 1
+
+image:
+  repository: bitnami/redis
+  pullPolicy: IfNotPresent
+  tag: ""
+
+service:
+  type: ClusterIP
+  port: 6379

@@ -1,0 +1,15 @@
+apiVersion: v2
+name: server
+type: application
+version: 0.0.1
+appVersion: 1.2.0
+dependencies:
+  - name: common
+    version: "*"
+    repository: "file://../common"
+  - name: redis
+    version: 0.0.1
+    repository: file://../redis
+    import-values:
+      - child: service
+        parent: redisImported

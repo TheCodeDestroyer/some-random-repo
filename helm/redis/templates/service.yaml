@@ -1,0 +1,9 @@
+{{- include "common.service" (list . "redis.service") -}}
+{{- define "redis.service" -}}
+spec:
+  ports:
+    - port: {{ .Values.service.port }}
+      targetPort: http
+      protocol: TCP
+      name: http
+{{- end -}}
