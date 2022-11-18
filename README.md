@@ -61,6 +61,20 @@ skaffold dev
 
 When terminating skaffold will clean everything up except `redis-secret` you created manually
 
+#### Helm deploy
+
+Move into `./helm/main` and run:
+
+```sh
+helm dependency build
+```
+
+Then to deploy the app run:
+
+```sh
+helm install [APP_NAME] .
+```
+
 ## Webserver
 
 Webserver has 4 endpoints:
