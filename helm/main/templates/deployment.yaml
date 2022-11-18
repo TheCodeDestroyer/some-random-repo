@@ -28,7 +28,7 @@ spec:
             - name: REDIS_PORT
               value: "{{ .Values.redisImported.port }}"
             - name: REDIS_HOST
-              value: "{{ .Release.Name }}-redis" # DONT KNOW HOW TO GET REDIS FULL NAME
+              value: "{{ .Release.Name }}-{{ .Values.redis.nameOverride }}"
             - name: REDIS_PASSWORD
               valueFrom:
                 secretKeyRef:

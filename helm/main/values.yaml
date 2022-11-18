@@ -9,6 +9,9 @@ service:
   type: ClusterIP
   port: 3000
 
+redis:
+  nameOverride: "redis"
+
 ingress:
   annotations: {
     kubernetes.io/ingress.class: "nginx",
