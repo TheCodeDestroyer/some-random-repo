@@ -1,0 +1,94 @@
+AWSTemplateFormatVersion: 2010-09-09
+Parameters:
+  SubnetIdParam:
+    Type: String
+  AvailabilityZoneParam:
+    Type: String
+  VpcIdParam:
+    Type: String
+  IngressCidrParam1:
+    Type: String
+  IngressCidrParam2:
+    Type: String
+
+Resources:
+  EC2Instance:
+    Type: AWS::EC2::Instance
+    Description: "CloudFormation EC2 instance"
+    Properties:
+      InstanceType: "t2.micro"
+      ImageId: "ami-076309742d466ad69"
+      AvailabilityZone: !Ref AvailabilityZoneParam
+      NetworkInterfaces:
+        - AssociatePublicIpAddress: true
+          DeviceIndex: 0
+          GroupSet:
+            - !Ref EC2SecurityGroup
+          SubnetId: !Ref SubnetIdParam
+      IamInstanceProfile: !Ref S3ReadOnlyInstanceProfile
+      Tags:
+        - Key: "Name"
+          Value: "CFN EC2 Instance"
+      UserData:
+        Fn::Base64: !Sub |
+          #!/bin/bash -xe
+          yum update -y
+          aws s3 cp s3://tcd-my-test-bucket/authorized_keys /home/ec2-user/.ssh/
+    DependsOn:
+      - EC2SecurityGroup
+      - S3ReadOnlyInstanceProfile
+
+  EC2SecurityGroup:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupName: "ec2-cfn-sg"
+      GroupDescription: "SSH access from whitelisted IPs"
+      VpcId: !Ref VpcIdParam
+      SecurityGroupIngress:
+        - CidrIp: !Ref IngressCidrParam1
+          FromPort: 43210
+          ToPort: 43210
+          IpProtocol: "tcp"
+        - CidrIp: !Ref IngressCidrParam2
+          FromPort: 43210
+          ToPort: 43210
+          IpProtocol: "tcp"
+      Tags:
+        - Key: "Name"
+          Value: "EC2 CFN Security Group"
+
+  S3ReadOnlyInstanceProfile:
+    Type: 'AWS::IAM::InstanceProfile'
+    Properties:
+      Path: /
+      Roles:
+        - !Ref S3ReadOnlyRole
+
+  S3ReadOnlyRole:
+    Type: 'AWS::IAM::Role'
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service:
+                - ec2.amazonaws.com
+            Action:
+              - 'sts:AssumeRole'
+      Path: /
+      Policies:
+        - PolicyName: s3-readonly
+          PolicyDocument:
+            Version: "2012-10-17"
+            Statement:
+              - Effect: Allow
+                Resource: '*'
+                Action:
+                  - "s3:Get*"
+                  - "s3:List*"
+                  - "s3-object-lambda:Get*"
+                  - "s3-object-lambda:List*"
+      Tags:
+        - Key: "Name"
+          Value: "CFN S3 IAM Role"
