@@ -10,14 +10,38 @@ Parameters:
     Type: String
   IngressCidrParam2:
     Type: String
+  HostedZoneNameParam:
+    Type: String
 
 Resources:
+  DNSRecord:
+    Type: AWS::Route53::RecordSet
+    Properties:
+      HostedZoneName: !Ref HostedZoneNameParam
+      Name: !Join [ "", [ www., !Ref HostedZoneNameParam ] ]
+      Type: A
+      TTL: 60
+      ResourceRecords:
+        - !Ref ElasticIP
+    DependsOn:
+      - ElasticIP
+
+  ElasticIP:
+    Type: AWS::EC2::EIP
+    Properties:
+      InstanceId: !Ref EC2Instance
+      Tags:
+        - Key: "Name"
+          Value: "CFN Elastic IP"
+    DependsOn:
+      - EC2Instance
+
   EC2Instance:
     Type: AWS::EC2::Instance
     Description: "CloudFormation EC2 instance"
     Properties:
       InstanceType: "t2.micro"
-      ImageId: "ami-076309742d466ad69"
+      ImageId: "ami-0caef02b518350c8b"
       AvailabilityZone: !Ref AvailabilityZoneParam
       NetworkInterfaces:
         - AssociatePublicIpAddress: true
@@ -32,8 +56,12 @@ Resources:
       UserData:
         Fn::Base64: !Sub |
           #!/bin/bash -xe
-          yum update -y
-          aws s3 cp s3://tcd-my-test-bucket/authorized_keys /home/ec2-user/.ssh/
+          apt update
+          apt upgrade -y
+          apt install awscli -y
+          aws s3 cp s3://tcd-my-test-bucket/authorized_keys /home/ubuntu/.ssh/
+          aws s3 cp s3://tcd-my-test-bucket/99-secure.conf /etc/ssh/sshd_config.d/
+          systemctl restart ssh
     DependsOn:
       - EC2SecurityGroup
       - S3ReadOnlyInstanceProfile
