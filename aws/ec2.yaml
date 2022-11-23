@@ -18,7 +18,7 @@ Resources:
     Type: AWS::Route53::RecordSet
     Properties:
       HostedZoneName: !Ref HostedZoneNameParam
-      Name: !Join [ "", [ www., !Ref HostedZoneNameParam ] ]
+      Name: !Join [ ".", [ www, !Ref HostedZoneNameParam ] ]
       Type: A
       TTL: 60
       ResourceRecords:

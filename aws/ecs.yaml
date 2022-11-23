@@ -1,0 +1,295 @@
+AWSTemplateFormatVersion: 2010-09-09
+Parameters:
+  VpcIdParam:
+    Type: String
+  Subnet1IdParam:
+    Type: String
+  Subnet2IdParam:
+    Type: String
+  CertificateArnParam:
+    Type: String
+  RedisPasswordParam:
+    Type: String
+  DNSNameSpaceParam:
+    Type: String
+  ServiceDiscoveryNameParam:
+    Type: String
+  HostedZoneNameParam:
+    Type: String
+
+Resources:
+  DNSRecord:
+    Type: AWS::Route53::RecordSet
+    Properties:
+      HostedZoneName: !Ref HostedZoneNameParam
+      Name: !Join [ ".", [ app, !Ref HostedZoneNameParam ] ]
+      Type: A
+      AliasTarget:
+        HostedZoneId: !GetAtt WebServerLoadBalancer.CanonicalHostedZoneID
+        DNSName: !GetAtt WebServerLoadBalancer.DNSName
+    DependsOn:
+      - WebServerService
+
+  WebServerService:
+    Type: AWS::ECS::Service
+    Properties:
+      Cluster: !Ref ECSCluster
+      DesiredCount: 1
+      TaskDefinition: !Ref WebServerTask
+      PlatformVersion: LATEST
+      LaunchType: FARGATE
+      NetworkConfiguration:
+        AwsvpcConfiguration:
+          AssignPublicIp: ENABLED
+          SecurityGroups:
+            - !Ref SecurityGroup
+          Subnets:
+            - !Ref Subnet1IdParam
+            - !Ref Subnet2IdParam
+      LoadBalancers:
+        - TargetGroupArn: !Ref WebServerTargetGroup
+          ContainerPort: 3000
+          ContainerName: some-random-image-webserver
+      Tags:
+        - Key: "Name"
+          Value: "CFN WebServer Service"
+    DependsOn:
+      - RedisService
+
+  RedisService:
+    Type: AWS::ECS::Service
+    Properties:
+      Cluster: !Ref ECSCluster
+      DesiredCount: 1
+      TaskDefinition: !Ref RedisTask
+      PlatformVersion: LATEST
+      LaunchType: FARGATE
+      NetworkConfiguration:
+        AwsvpcConfiguration:
+          AssignPublicIp: ENABLED
+          SecurityGroups:
+            - !Ref SecurityGroup
+          Subnets:
+            - !Ref Subnet1IdParam
+            - !Ref Subnet2IdParam
+      ServiceRegistries:
+        - RegistryArn: !GetAtt ServiceDiscovery.Arn
+      Tags:
+        - Key: "Name"
+          Value: "CFN WebServer Service"
+    DependsOn:
+      - HTTPSServerListener
+      - HTTPServerListener
+      - SecurityGroupIngress
+
+  WebServerTask:
+    Type: AWS::ECS::TaskDefinition
+    Properties:
+      ContainerDefinitions:
+        - Name: some-random-image-webserver
+          Image: thecodedestroyer/some-random-image-webserver
+          Essential: true
+          PortMappings:
+            - ContainerPort: 3000
+              HostPort: 3000
+              Protocol: tcp
+          Environment:
+            - Name: WEB_SERVER_VERSION
+              Value: 1.2.0
+            - Name: REDIS_PASSWORD
+              Value: !Ref RedisPasswordParam
+            - Name: REDIS_HOST
+              Value: !Join [ ".", [ !Ref ServiceDiscoveryNameParam, !Ref DNSNameSpaceParam ] ]
+            - Name: REDIS_PORT
+              Value: "7369"
+      RuntimePlatform:
+        CpuArchitecture: X86_64
+        OperatingSystemFamily: LINUX
+      Cpu: "1024"
+      Memory: "3072"
+      TaskRoleArn: "arn:aws:iam::775559259440:role/ecsTaskExecutionRole"
+      ExecutionRoleArn: "arn:aws:iam::775559259440:role/ecsTaskExecutionRole"
+      NetworkMode: awsvpc
+      RequiresCompatibilities:
+        - FARGATE
+      Tags:
+        - Key: "Name"
+          Value: "CFN WebServer Task Definition"
+
+  RedisTask:
+    Type: AWS::ECS::TaskDefinition
+    Properties:
+      ContainerDefinitions:
+        - Name: redis
+          Image: bitnami/redis
+          Essential: true
+          PortMappings:
+            - ContainerPort: 7369
+              HostPort: 7369
+              Protocol: tcp
+          Environment:
+            - Name: REDIS_DISABLE_COMMANDS
+              Value: "FLUSHDB,FLUSHALL,CONFIG"
+            - Name: REDIS_PASSWORD
+              Value: !Ref RedisPasswordParam
+            - Name: REDIS_PORT_NUMBER
+              Value: "7369"
+      RuntimePlatform:
+        CpuArchitecture: X86_64
+        OperatingSystemFamily: LINUX
+      Cpu: "1024"
+      Memory: "3072"
+      TaskRoleArn: "arn:aws:iam::775559259440:role/ecsTaskExecutionRole"
+      ExecutionRoleArn: "arn:aws:iam::775559259440:role/ecsTaskExecutionRole"
+      NetworkMode: awsvpc
+      RequiresCompatibilities:
+        - FARGATE
+      Tags:
+        - Key: "Name"
+          Value: "CFN Redis Task Definition"
+
+  HTTPSServerListener:
+    Type: AWS::ElasticLoadBalancingV2::Listener
+    Properties:
+      Protocol: HTTPS
+      Port: 443
+      LoadBalancerArn: !Ref WebServerLoadBalancer
+      DefaultActions:
+        - ForwardConfig:
+            TargetGroups:
+              - TargetGroupArn: !Ref WebServerTargetGroup
+          TargetGroupArn: !Ref WebServerTargetGroup
+          Type: forward
+      Certificates:
+        - CertificateArn: !Ref CertificateArnParam
+    DependsOn:
+      - WebServerTargetGroup
+      - WebServerLoadBalancer
+
+  HTTPServerListener:
+    Type: AWS::ElasticLoadBalancingV2::Listener
+    Properties:
+      Port: 80
+      Protocol: HTTP
+      LoadBalancerArn: !Ref WebServerLoadBalancer
+      DefaultActions:
+        - ForwardConfig:
+            TargetGroups:
+              - TargetGroupArn: !Ref WebServerTargetGroup
+          TargetGroupArn: !Ref WebServerTargetGroup
+          Type: forward
+    DependsOn:
+      - WebServerTargetGroup
+      - WebServerLoadBalancer
+
+  WebServerLoadBalancer:
+    Type: AWS::ElasticLoadBalancingV2::LoadBalancer
+    Properties:
+      IpAddressType: ipv4
+      Name: webserver-lb
+      Scheme: internet-facing
+      SecurityGroups:
+        - !Ref HTTPSecurityGroup
+      Subnets:
+        - !Ref Subnet1IdParam
+        - !Ref Subnet2IdParam
+      Type: application
+    DependsOn:
+      - SecurityGroup
+
+  WebServerTargetGroup:
+    Type: AWS::ElasticLoadBalancingV2::TargetGroup
+    Properties:
+      Name: webserver-tg
+      Port: 80
+      Protocol: HTTP
+      ProtocolVersion: HTTP1
+      TargetType: ip
+      VpcId: !Ref VpcIdParam
+      Tags:
+        - Key: "Name"
+          Value: "CFN Webserver Target Group"
+    DependsOn:
+      - WebServerLoadBalancer
+
+  SecurityGroupIngress:
+    Type: AWS::EC2::SecurityGroupIngress
+    Properties:
+      GroupId: !Ref SecurityGroup
+      SourceSecurityGroupId: !Ref SecurityGroup
+      FromPort: 7369
+      ToPort: 7369
+      IpProtocol: "tcp"
+
+  SecurityGroup:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupName: "ecs-cfn-sg"
+      GroupDescription: "SSH access from whitelisted IPs"
+      VpcId: !Ref VpcIdParam
+      SecurityGroupIngress:
+        - CidrIp: 0.0.0.0/0
+          FromPort: 3000
+          ToPort: 3000
+          IpProtocol: "tcp"
+      Tags:
+        - Key: "Name"
+          Value: "CFN Security Group"
+
+  HTTPSecurityGroup:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupName: "elbv2-cfn-sg"
+      GroupDescription: "HTTP/S access"
+      VpcId: !Ref VpcIdParam
+      SecurityGroupIngress:
+        - CidrIp: 0.0.0.0/0
+          FromPort: 80
+          ToPort: 80
+          IpProtocol: "tcp"
+        - CidrIp: 0.0.0.0/0
+          FromPort: 443
+          ToPort: 443
+          IpProtocol: "tcp"
+      Tags:
+        - Key: "Name"
+          Value: "CFN HTTP Security Group"
+
+  ECSCluster:
+    Type: AWS::ECS::Cluster
+    Properties:
+      ClusterName: MyNewCluster
+      CapacityProviders:
+        - FARGATE
+        - FARGATE_SPOT
+      Tags:
+        - Key: "Name"
+          Value: "CFN Cluster"
+    DependsOn:
+      - ServiceDiscovery
+
+  ServiceDiscovery:
+    Type: 'AWS::ServiceDiscovery::Service'
+    Properties:
+      DnsConfig:
+        DnsRecords:
+          - Type: A
+            TTL: 60
+      HealthCheckCustomConfig:
+        FailureThreshold: 1
+      Name: redis-2
+      NamespaceId: !Ref PrivateDNSNamespace
+      Tags:
+        - Key: "Name"
+          Value: "CFN Service Discovery"
+    DependsOn:
+      - PrivateDNSNamespace
+
+  PrivateDNSNamespace:
+    Type: AWS::ServiceDiscovery::PrivateDnsNamespace
+    Properties:
+      Name: !Ref DNSNameSpaceParam
+      Vpc: !Ref VpcIdParam
+      Tags:
+        - Key: "Name"
+          Value: "CFN Namespace"
